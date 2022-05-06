@@ -149,6 +149,12 @@ export const getRouterData = app => {
         import("../routes/System/Dict")
       )
     },
+    "/config/service": {
+      // 字典管理
+      component: dynamicWrapper(app, ["shenyuDict"], () =>
+        import("../routes/System/ServiceConfig")
+      )
+    },
     "/exception/403": {
       component: dynamicWrapper(app, [], () =>
         import("../routes/Exception/403")

@@ -80,6 +80,12 @@ export const menuData = [
         name: getIntlContent('SHENYU.MENU.SYSTEM.MANAGMENT.DICTIONARY'),
         path: 'dict',
         locale: 'SHENYU.MENU.SYSTEM.MANAGMENT.DICTIONARY'
+      },
+      {
+        name: getIntlContent('SHENYU.MENU.SERVICE.MANAGEMENT'),
+        icon: 'setting',
+        path: 'service',
+        locale: 'SHENYU.MENU.SERVICE.MANAGEMENT'
       }
     ],
   },
