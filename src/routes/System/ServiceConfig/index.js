@@ -256,7 +256,7 @@ export default class Plugin extends Component {
               }
             });
           }}
-          handleCancel={() => {
+          onCancel={() => {
             this.closeModal();
           }}
         />

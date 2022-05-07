@@ -24,7 +24,8 @@ import {
   addPlugin,
   asyncPlugin,
   updatepluginEnabled,
-  fetchPluginHandleByPluginId
+  fetchPluginHandleByPluginId,
+  getAllPluginList
 } from "../services/api";
 import {getIntlContent} from "../utils/IntlUtils";
 
@@ -33,7 +34,8 @@ export default {
 
   state: {
     pluginList: [],
-    total: 0
+    total: 0,
+    allEnabledPluginsList: [],
   },
 
   effects: {
@@ -141,6 +143,23 @@ export default {
         callback(json);
       }
     },
+    *fetchEnabledPlugins({ call, put }) {
+      const json = yield call(getAllPluginList);
+      console.log(json)
+      if (json.code === 200) {
+        let { dataList } = json.data;
+        dataList = dataList.map(item => {
+          item.key = item.id;
+          return item;
+        });
+        yield put({
+          type: "saveAllEnabledPlugins",
+          payload: {
+            dataList
+          }
+        });
+      }
+    },
 
   },
 
@@ -164,6 +183,12 @@ export default {
         ...state,
         pluginList,
       };
-    }
+    },
+    saveAllEnabledPlugins(state, { payload }) {
+      return {
+        ...state,
+        allEnabledPluginsList: payload.dataList,
+      };
+    },
   }
 };

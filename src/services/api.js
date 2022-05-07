@@ -198,6 +198,12 @@ export async function updatePlugin(params) {
   });
 }
 
+export async function getAllPluginList() {
+  return request(`${baseUrl}/plugin/all`, {
+    method: `GET`
+  });
+}
+
 /* getAllPlugins */
 export async function getAllPlugins(params) {
   return request(`${baseUrl}/plugin?${stringify(params)}`, {
