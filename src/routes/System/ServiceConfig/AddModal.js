@@ -53,10 +53,10 @@ const formCheckLayout = {
 
 let id = 0;
 
-@connect(({ plugin, pluginHandle, global, shenyuDict }) => ({
+@connect(({ plugin, pluginHandle, shenyuDict }) => ({
   plugin,
   pluginHandle,
-  platform: global.platform,
+  // platform: global.platform,
   shenyuDict
 }))
 class AddModal extends Component {
@@ -200,49 +200,70 @@ class AddModal extends Component {
     return result;
   };
 
+  judgeObject = (obj) => {
+    if (obj === null || typeof obj === "undefined" || obj === "") {
+      return null;
+    } else {
+      return obj;
+    }
+  }
+
+  getMultiSelectorHandle = (pluginDetail) => {
+    let pluginConfig = pluginDetail.config;
+    if (this.judgeObject(pluginConfig) === null) {
+      return null;
+    } else {
+      let configJson = JSON.parse(pluginConfig);
+      return Object.keys(configJson).includes("multiSelectorHandle") === true ? configJson.multiSelectorHandle : null;
+    }
+  }
+
+  // mock data:
+  // todo 2020/5/10 submit button
   handleSubmit = e => {
     e.preventDefault();
-    const { form, handleOk, multiSelectorHandle, pluginId } = this.props;
-    const { selectorConditions, selectValue, pluginHandleList } = this.state;
+    const { form, handleOk } = this.props;
+    const { selectorConditions, selectValue, selectedPluginHandleList } = this.state;
     let handle = [];
 
     form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const mySubmit =
-          selectValue !== "0" && this.checkConditions(selectorConditions);
+        const mySubmit = selectValue !== "0" && this.checkConditions(selectorConditions);
         if (mySubmit || selectValue === "0") {
-          pluginHandleList.forEach((handleList, index) => {
-            handle[index] = {};
-            handleList.forEach(item => {
-              if (pluginId === "8") {
-                const { keys, divideUpstreams } = values;
-                const data = {
-                  [item.field]: values[item.field],
-                  gray: values.gray
-                };
+          selectedPluginHandleList.for((pluginDetail) => {
+            pluginDetail.pluginHandleList.forEach((handleList, index) => {
+              handle[index] = {};
+              handleList.forEach(item => {
+                if (item.pluginId === "8") {
+                  const { keys, divideUpstreams } = values;
+                  const data = {
+                    [item.field]: values[item.field],
+                    gray: values.gray
+                  };
 
-                if (Array.isArray(divideUpstreams) && divideUpstreams.length) {
-                  data.divideUpstreams = keys.map(key => divideUpstreams[key]);
+                  if (Array.isArray(divideUpstreams) && divideUpstreams.length) {
+                    data.divideUpstreams = keys.map(key => divideUpstreams[key]);
+                  }
+                  handle[index] = data;
+                  delete values[item.field];
+                  delete values.divideUpstreams;
+                  delete values.gray;
+                  delete values.key;
+                } else {
+                  handle[index][item.field] = values[item.field + index];
+                  delete values[item.field + index];
                 }
-                handle[index] = data;
-                delete values[item.field];
-                delete values.divideUpstreams;
-                delete values.gray;
-                delete values.key;
-              } else {
-                handle[index][item.field] = values[item.field + index];
-                delete values[item.field + index];
-              }
+              });
             });
-          });
-          handleOk({
-            ...values,
-            handle: multiSelectorHandle
-              ? JSON.stringify(handle)
-              : JSON.stringify(handle[0]),
-            sort: Number(values.sort),
-            selectorConditions
-          });
+            handleOk({
+              ...values,
+              handle: multiSelectorHandle
+                ? JSON.stringify(handle)
+                : JSON.stringify(handle[0]),
+              sort: Number(values.sort),
+              selectorConditions
+            });
+          })
         }
       }
     });
@@ -275,26 +296,32 @@ class AddModal extends Component {
     this.setState({ selectorConditions });
   };
 
-  handleAddHandle = () => {
-    let { pluginHandleList } = this.state;
-    let pluginHandle = pluginHandleList[0];
+  handleAddHandle = (pluginId, event) => {
+    console.log(event)
+    // query pluginHandleList by pluginId from select
+    let { selectedPluginHandleList } = this.state;
+    let currentPlugin = selectedPluginHandleList.find((x) => x.pluginId === pluginId);
+    let currentPluginHandleList = currentPlugin.pluginHandleList;
+    let pluginHandle = currentPlugin.pluginHandleList[0];
     let toAddPluginHandle = pluginHandle.map(e => {
       return { ...e, value: null };
     });
-    pluginHandleList.push(toAddPluginHandle);
+    currentPluginHandleList.push(toAddPluginHandle);
     this.setState({
-      pluginHandleList
+      selectedPluginHandleList
     });
   };
 
-  handleDeleteHandle = index => {
-    let { pluginHandleList } = this.state;
-    if (pluginHandleList.length === 1) {
+  handleDeleteHandle = (pluginId, index) => {
+    let { selectedPluginHandleList } = this.state;
+    let currentPlugin = selectedPluginHandleList.find((x) => x.pluginId === pluginId);
+    let currentPluginHandleList = currentPlugin.pluginHandleList;
+    if (currentPluginHandleList.length === 1) {
       message.destroy();
       message.error(getIntlContent("SHENYU.PLUGIN.HANDLE.TIP"));
     } else {
-      pluginHandleList.splice(index, 1);
-      this.setState({ pluginHandleList });
+      currentPluginHandleList.splice(index, 1);
+      this.setState({ selectedPluginHandleList });
     }
   };
 
@@ -328,9 +355,7 @@ class AddModal extends Component {
     let pluginHandleList = plugin.pluginHandleList;
     let pluginName = plugin.pluginName;
     let pluginId = plugin.pluginId;
-    let pluginConfig = plugin.pluginDetail.config;
-    let multiSelectorHandle = pluginConfig ? pluginConfig.multiSelectorHandle ?
-      JSON.parse(plugin.pluginDetail.config).multiSelectorHandle : null : null;
+    let multiSelectorHandle = this.getMultiSelectorHandle(plugin.pluginDetail)
     const { divideUpstreams, gray, serviceId } = this.state;
     const {
       form: { getFieldDecorator, getFieldValue, setFieldsValue },
@@ -719,7 +744,7 @@ class AddModal extends Component {
                         }}
                         onConfirm={e => {
                           e.stopPropagation();
-                          this.handleDeleteHandle(index);
+                          this.handleDeleteHandle(pluginId, index);
                         }}
                         okText={getIntlContent("SHENYU.COMMON.SURE")}
                         cancelText={getIntlContent("SHENYU.COMMON.CALCEL")}
@@ -736,7 +761,7 @@ class AddModal extends Component {
           </div>
           {multiSelectorHandle && (
             <div style={{ width: 80, marginTop: 3, marginLeft: 5 }}>
-              <Button onClick={this.handleAddHandle} type="primary">
+              <Button onClick={e => {this.handleAddHandle(pluginId, pluginName, e)}} type="primary">
                 {getIntlContent("SHENYU.COMMON.ADD")}
               </Button>
             </div>
@@ -745,46 +770,6 @@ class AddModal extends Component {
       );
     }
     return null;
-  };
-
-  handleCopyData = copyData => {
-    const { form } = this.props;
-    const {
-      selectorConditions,
-      name,
-      type,
-      matchMode,
-      continued,
-      loged,
-      enabled,
-      sort
-    } = copyData;
-    const formData = {
-      name,
-      type: type.toString(),
-      continued,
-      loged,
-      enabled,
-      sort
-    };
-
-    if (type === 1) {
-      formData.matchMode = matchMode.toString();
-      this.initSelectorCondtion({
-        selectorConditions: selectorConditions.map(v => {
-          const {
-            id: rawId,
-            selectorId,
-            dateCreated,
-            dateUpdated,
-            ...condition
-          } = v;
-          return condition;
-        })
-      });
-    }
-    form.setFieldsValue(formData);
-    this.setState({ visible: false, selectValue: type.toString() });
   };
 
   onDealChange = (value,item) => {
@@ -804,8 +789,9 @@ class AddModal extends Component {
   }
 
   queryPluginHandler = (pluginId, pluginName, pluginDetail) => {
-    const { dispatch, handle, multiSelectorHandle } = this.props;
+    const { dispatch, handle} = this.props;
     let type = 1;
+    let multiSelectorHandle = this.getMultiSelectorHandle(pluginDetail) || true;
     dispatch({
       type: "pluginHandle/fetchByPluginId",
       payload: {
@@ -833,7 +819,7 @@ class AddModal extends Component {
       onCancel,
       form,
       serviceName = "",
-      platform,
+      // platform,
       type = "1",
       matchMode = "",
       continued = true,
@@ -856,7 +842,7 @@ class AddModal extends Component {
     } = this.state;
 
     type = `${type}`;
-    let { selectorTypeEnums } = platform;
+    // let { selectorTypeEnums } = platform;
 
     const { getFieldDecorator } = form;
 
