@@ -31,6 +31,17 @@ export function getIntlContent(key, defaultValue) {
   return intl.get(key).defaultMessage(defaultValue);
 }
 
+export function groupBy(objectArray, property) {
+  return objectArray.reduce((acc, obj) => {
+    let key = obj[property]
+    if (!acc[key]) {
+      acc[key] = []
+    }
+    acc[key].push(obj)
+    return acc
+  }, {})
+}
+
 export function getCurrentLocale(locale) {
   if (locale === 'en-US') {
     return "English";

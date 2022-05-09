@@ -291,6 +291,7 @@
   "SHENYU.MENU.SERVICE.MANAGEMENT.PLUGIN": "Plugin",
   "SHENYU.MENU.SERVICE.MANAGEMENT.CONDITION": "ServiceCondition",
   "SHENYU.MENU.SERVICE.MANAGEMENT.HANDLER": "SelectorHandler",
-  "SHENYU.SERVICE": "Service Config"
+  "SHENYU.SERVICE": "Service Config",
+  "SHENYU.SERVICE.NAME": "Input Service Name"
 
 }

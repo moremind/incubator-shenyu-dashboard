@@ -40,7 +40,7 @@ import { getIntlContent } from "../../../utils/IntlUtils";
 
 const FormItem = Form.Item;
 const { Option } = Select;
-const { TreeNode } = TreeSelect;
+const { SHOW_CHILD } = TreeSelect;
 
 const formItemLayout = {
   labelCol: { sm: { span: 3 } },
@@ -92,62 +92,60 @@ class AddModal extends Component {
 
     this.initSelectorCondtion(props);
     this.initDics();
-    this.queryAllPlugin();
   }
 
   componentWillMount() {
     const { dispatch, pluginId, handle, multiSelectorHandle } = this.props;
-    this.setState({ pluginHandleList: [] });
-    this.setState({ enabledPluginList: [] })
-    let type = 1;
-    dispatch({
-      type: "pluginHandle/fetchByPluginId",
-      payload: {
-        pluginId,
-        type,
-        handle,
-        isHandleArray: multiSelectorHandle,
-        callBack: pluginHandles => {
-          this.setPluginHandleList(pluginHandles);
-        }
-      }
-    });
-    const { name, enabled } = this.state;
-    dispatch({
-      type: "plugin/fetch",
-      payload: {
-        name,
-        enabled,
-        currentPage: 1,
-        pageSize: 12
-      }
-    });
-    dispatch({
-      type: "plugin/fetch",
-      payload: {
-        callback: allEnabledPluginsList => {
-          this.setEnabledPluginList(allEnabledPluginsList);
-        }
-      }
-    });
-    // this.queryAllPlugin();
-  }
-
-  queryAllPlugin = () =>{
-    const { dispatch } = this.props;
+    // this.setState({ pluginHandleList: [] });
+    let that = this;
+    // let type = 1;
+    // dispatch({
+    //   type: "pluginHandle/fetchByPluginId",
+    //   payload: {
+    //     pluginId,
+    //     type,
+    //     handle,
+    //     isHandleArray: multiSelectorHandle,
+    //     callBack: pluginHandles => {
+    //       this.setPluginHandleList(pluginHandles);
+    //     }
+    //   }
+    // });
     dispatch({
       type: "plugin/fetchEnabledPlugins",
       payload: {
-        callback: allEnabledPluginsList => {
-          this.setEnabledPluginList(allEnabledPluginsList);
+        callBack: (enablePlugins) => {
+          this.generateTreeData(enablePlugins)
         }
       }
-    })
+    });
+    // this.query();
+    // this.queryAllPlugin();
   }
 
-  setEnabledPluginList = pluginList => {
-    this.setState({ enabledPluginList: pluginList });
-  };
+  generateTreeData = (enabledPlugins) => {
+    let treeData = [];
+    Object.keys(enabledPlugins).forEach(resultKey => {
+      let treeNode = {};
+      treeNode.title = resultKey;
+      treeNode.value = resultKey;
+      treeNode.key = resultKey;
+      let resultValue = enabledPlugins[resultKey];
+      let childNodes = [];
+      resultValue.forEach((currentValue) => {
+
+        let childNode = {};
+        childNode.title = currentValue.name;
+        childNode.key = currentValue.id;
+        childNode.value = currentValue.id;
+        childNode.plugin = currentValue;
+        childNodes.push(childNode)
+      });
+      treeNode.children = childNodes;
+      treeData.push(treeNode)
+    });
+    this.state.treeData = treeData;
+  }
 
   initSelectorCondtion = props => {
     const selectorConditions = props.selectorConditions || [
@@ -188,10 +186,6 @@ class AddModal extends Component {
         }
       }
     });
-  };
-
-  setPluginHandleList = pluginHandles => {
-    this.setState({ pluginHandleList: pluginHandles });
   };
 
   checkConditions = selectorConditions => {
@@ -344,12 +338,26 @@ class AddModal extends Component {
     });
   };
 
-  renderPluginHandler = () => {
-    const { pluginHandleList, divideUpstreams, gray, serviceId } = this.state;
+  renderPluginHandler = (plugin) => {
+    // console.log(pluginName, pluginHandleList)
+    // console.log(selectedPluginHandleList === undefined)
+    //
+    if (this.state.selectedPluginHandleList === undefined) {
+      return null;
+    }
+    let pluginHandleList = plugin.pluginHandleList;
+    let pluginName = plugin.pluginName;
+    let pluginId = plugin.pluginId;
+    // console.log(plugin.pluginDetail.config)
+    console.log(plugin.pluginDetail)
+    let pluginConfig = plugin.pluginDetail.config;
+    let multiSelectorHandle = pluginConfig ? pluginConfig.multiSelectorHandle ?
+      JSON.parse(plugin.pluginDetail.config).multiSelectorHandle : null : null;
+    const { divideUpstreams, gray, serviceId } = this.state;
     const {
       form: { getFieldDecorator, getFieldValue, setFieldsValue },
-      multiSelectorHandle,
-      pluginId
+      // multiSelectorHandle,
+      // pluginId
     } = this.props;
     const labelWidth = 75;
 
@@ -579,7 +587,7 @@ class AddModal extends Component {
         <div className={styles.handleWrap}>
           <div className={styles.header}>
             <h3 style={{ width: 100 }}>
-              {getIntlContent("SHENYU.COMMON.DEAL")}:{" "}
+              {pluginName} - {getIntlContent("SHENYU.COMMON.DEAL")}:{" "}
             </h3>
           </div>
           <div>
@@ -805,7 +813,45 @@ class AddModal extends Component {
 
   onDealChange = (value,item) => {
     item.value = value;
+  };
+
+  onPluginChange = (activePlugin) => {
+    let currentArr = this.state.selectedPluginHandleList || [];
+    let newArr = currentArr.filter((x) => activePlugin.some((item) => x.pluginId === item))
+    this.setState({
+      selectedPluginHandleList: newArr
+    });
   }
+
+  onPluginSelect = (value, node) => {
+    this.queryPluginHandler(node.props.value, node.props.title, node.props.plugin);
+  }
+
+  queryPluginHandler = (pluginId, pluginName, pluginDetail) => {
+    const { dispatch, handle, multiSelectorHandle } = this.props;
+    // this.setState({ pluginHandleList: [] })
+    let type = 1;
+    dispatch({
+      type: "pluginHandle/fetchByPluginId",
+      payload: {
+        pluginId,
+        type,
+        handle,
+        isHandleArray: multiSelectorHandle,
+        callBack: pluginHandles => {
+          this.setPluginHandleList(pluginId, pluginName, pluginHandles, pluginDetail);
+        }
+      }
+    });
+  }
+
+  setPluginHandleList = (pluginId, pluginName, pluginHandles, pluginDetail) => {
+    let currentPlugin = {pluginId, pluginName, pluginHandleList: pluginHandles, pluginDetail}
+    const currentArr = this.state.selectedPluginHandleList || [];
+    this.setState({
+      selectedPluginHandleList: [...currentArr, currentPlugin]
+    })
+  };
 
   render() {
     let {
@@ -825,11 +871,13 @@ class AddModal extends Component {
       selectorConditions,
       selectValue,
       pluginHandleList,
+      selectedPluginHandleList,
       operatorDics,
       matchModeDics,
       paramTypeDics,
       visible,
-      enabledPluginList,
+      treeData,
+      selectPlugin,
     } = this.state;
 
     type = `${type}`;
@@ -843,7 +891,7 @@ class AddModal extends Component {
           pluginHandleList &&
           pluginHandleList.length > 0 &&
           pluginHandleList[0].length > 3
-            ? 1200
+            ? 1300
             : 1000
         }
         centered
@@ -860,7 +908,7 @@ class AddModal extends Component {
               rules: [
                 {
                   required: true,
-                  message: getIntlContent("SHENYU.PLUGIN.SELECT")
+                  message: getIntlContent("SHENYU.SERVICE.NAME")
                 }
               ],
               initialValue: serviceName
@@ -871,8 +919,32 @@ class AddModal extends Component {
               />
             )}
           </FormItem>
-          <FormItem label={getIntlContent("SHENYU.MENU.SERVICE.MANAGEMENT.PLUGIN")}>
-
+          <FormItem label={getIntlContent("SHENYU.MENU.SERVICE.MANAGEMENT.PLUGIN")} {...formItemLayout}>
+            {getFieldDecorator("selectPlugin", {
+              rules: [
+                {
+                  required: true,
+                  message: getIntlContent("SHENYU.PLUGIN.SELECT")
+                }
+              ],
+              initialValue: selectPlugin
+            })(
+              <TreeSelect
+                treeData={treeData}
+                showSearch
+                showCheckedStrategy={SHOW_CHILD}
+                style={{ width: '100%' }}
+                value={selectPlugin}
+                treeCheckable={true}
+                dropdownStyle={{ maxHeight: 200, overflow: 'auto' }}
+                placeholder="Please select"
+                allowClear
+                multiple
+                treeDefaultExpandAll
+                onChange={this.onPluginChange}
+                onSelect={this.onPluginSelect}
+              />
+            )}
           </FormItem>
           {selectValue !== "0" && (
             <Fragment>
@@ -1043,7 +1115,8 @@ class AddModal extends Component {
               })(<Switch />)}
             </FormItem>
           </div>
-          {this.renderPluginHandler()}
+          {selectedPluginHandleList === undefined ? null : selectedPluginHandleList.map((item) =>
+            this.renderPluginHandler(item))}
           <FormItem
             label={getIntlContent("SHENYU.SELECTOR.EXEORDER")}
             {...formItemLayout}

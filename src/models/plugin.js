@@ -27,7 +27,7 @@ import {
   fetchPluginHandleByPluginId,
   getAllPluginList
 } from "../services/api";
-import {getIntlContent} from "../utils/IntlUtils";
+import {getIntlContent, groupBy} from "../utils/IntlUtils";
 
 export default {
   namespace: "plugin",
@@ -143,15 +143,22 @@ export default {
         callback(json);
       }
     },
-    *fetchEnabledPlugins({ call, put }) {
+    *fetchEnabledPlugins(params, { call, put }) {
+      const { payload } = params;
+      let callback = payload.callBack;
       const json = yield call(getAllPluginList);
-      console.log(json)
       if (json.code === 200) {
-        let { dataList } = json.data;
+        let dataList = json.data;
         dataList = dataList.map(item => {
           item.key = item.id;
           return item;
         });
+        // 过滤激活的插件
+        dataList = dataList.filter(item => item.enabled);
+
+        // 对插件进行分类
+        dataList = groupBy(dataList, "role")
+        callback(dataList);
         yield put({
           type: "saveAllEnabledPlugins",
           payload: {
@@ -160,7 +167,6 @@ export default {
         });
       }
     },
-
   },
 
   reducers: {
