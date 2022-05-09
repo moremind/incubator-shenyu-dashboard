@@ -95,22 +95,7 @@ class AddModal extends Component {
   }
 
   componentWillMount() {
-    const { dispatch, pluginId, handle, multiSelectorHandle } = this.props;
-    // this.setState({ pluginHandleList: [] });
-    let that = this;
-    // let type = 1;
-    // dispatch({
-    //   type: "pluginHandle/fetchByPluginId",
-    //   payload: {
-    //     pluginId,
-    //     type,
-    //     handle,
-    //     isHandleArray: multiSelectorHandle,
-    //     callBack: pluginHandles => {
-    //       this.setPluginHandleList(pluginHandles);
-    //     }
-    //   }
-    // });
+    const { dispatch } = this.props;
     dispatch({
       type: "plugin/fetchEnabledPlugins",
       payload: {
@@ -119,8 +104,6 @@ class AddModal extends Component {
         }
       }
     });
-    // this.query();
-    // this.queryAllPlugin();
   }
 
   generateTreeData = (enabledPlugins) => {
@@ -339,25 +322,18 @@ class AddModal extends Component {
   };
 
   renderPluginHandler = (plugin) => {
-    // console.log(pluginName, pluginHandleList)
-    // console.log(selectedPluginHandleList === undefined)
-    //
     if (this.state.selectedPluginHandleList === undefined) {
       return null;
     }
     let pluginHandleList = plugin.pluginHandleList;
     let pluginName = plugin.pluginName;
     let pluginId = plugin.pluginId;
-    // console.log(plugin.pluginDetail.config)
-    console.log(plugin.pluginDetail)
     let pluginConfig = plugin.pluginDetail.config;
     let multiSelectorHandle = pluginConfig ? pluginConfig.multiSelectorHandle ?
       JSON.parse(plugin.pluginDetail.config).multiSelectorHandle : null : null;
     const { divideUpstreams, gray, serviceId } = this.state;
     const {
       form: { getFieldDecorator, getFieldValue, setFieldsValue },
-      // multiSelectorHandle,
-      // pluginId
     } = this.props;
     const labelWidth = 75;
 
@@ -829,7 +805,6 @@ class AddModal extends Component {
 
   queryPluginHandler = (pluginId, pluginName, pluginDetail) => {
     const { dispatch, handle, multiSelectorHandle } = this.props;
-    // this.setState({ pluginHandleList: [] })
     let type = 1;
     dispatch({
       type: "pluginHandle/fetchByPluginId",
