@@ -82,7 +82,6 @@ class AddModal extends Component {
 
     this.state = {
       selectValue,
-
       gray,
       serviceId,
       divideUpstreams,
@@ -106,6 +105,10 @@ class AddModal extends Component {
     });
   }
 
+  /**
+   * generate plugin tree
+   * @param enabledPlugins
+   */
   generateTreeData = (enabledPlugins) => {
     let treeData = [];
     Object.keys(enabledPlugins).forEach(resultKey => {
@@ -116,7 +119,6 @@ class AddModal extends Component {
       let resultValue = enabledPlugins[resultKey];
       let childNodes = [];
       resultValue.forEach((currentValue) => {
-
         let childNode = {};
         childNode.title = currentValue.name;
         childNode.key = currentValue.id;
@@ -222,15 +224,28 @@ class AddModal extends Component {
   // todo 2020/5/10 submit button
   handleSubmit = e => {
     e.preventDefault();
-    const { form, handleOk } = this.props;
+    const { form, handleOk} = this.props;
     const { selectorConditions, selectValue, selectedPluginHandleList } = this.state;
-    let handle = [];
+
+    let serviceConfig = {};
 
     form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const mySubmit = selectValue !== "0" && this.checkConditions(selectorConditions);
         if (mySubmit || selectValue === "0") {
-          selectedPluginHandleList.for((pluginDetail) => {
+          console.log(this.state.selectedPluginHandleList)
+          serviceConfig.serviceName = this.props.form.getFieldValue("serviceName");
+          selectedPluginHandleList.forEach((pluginDetail) => {
+            let pluginSelector = {type: "1", pluginId: pluginDetail.pluginId};
+            pluginSelector.name = this.props.form.getFieldValue("serviceName");
+            pluginSelector.matchMode = this.props.form.getFieldValue("matchMode");
+            pluginSelector.continued = this.props.form.getFieldValue("continued");
+            pluginSelector.loged = this.props.form.getFieldValue("loged");
+            pluginSelector.enabled = this.props.form.getFieldValue("enabled");
+            pluginSelector.sort = this.props.form.getFieldValue("sort");
+            pluginSelector.selectorConditions = selectorConditions;
+            console.log(pluginSelector)
+            let handle = [];
             pluginDetail.pluginHandleList.forEach((handleList, index) => {
               handle[index] = {};
               handleList.forEach(item => {
@@ -255,14 +270,15 @@ class AddModal extends Component {
                 }
               });
             });
-            handleOk({
-              ...values,
-              handle: multiSelectorHandle
-                ? JSON.stringify(handle)
-                : JSON.stringify(handle[0]),
-              sort: Number(values.sort),
-              selectorConditions
-            });
+            pluginSelector.handle = JSON.stringify(handle);
+            // handleOk({
+            //   ...values,
+            //   handle: multiSelectorHandle
+            //     ? JSON.stringify(handle)
+            //     : JSON.stringify(handle[0]),
+            //   sort: Number(values.sort),
+            //   selectorConditions
+            // });
           })
         }
       }
@@ -661,6 +677,12 @@ class AddModal extends Component {
                                     placeholder={placeholder}
                                     key={fieldName}
                                     type="number"
+                                    onChange={e=> {
+                                      this.onDealChange(
+                                        e.target.value,
+                                        item
+                                      );
+                                    }}
                                   />
                                 )}
                               </FormItem>
@@ -773,6 +795,7 @@ class AddModal extends Component {
   };
 
   onDealChange = (value,item) => {
+    console.log(value, item)
     item.value = value;
   };
 
@@ -820,7 +843,6 @@ class AddModal extends Component {
       form,
       serviceName = "",
       // platform,
-      type = "1",
       matchMode = "",
       continued = true,
       loged = true,
@@ -831,7 +853,6 @@ class AddModal extends Component {
     const {
       selectorConditions,
       selectValue,
-      pluginHandleList,
       selectedPluginHandleList,
       operatorDics,
       matchModeDics,
@@ -841,20 +862,14 @@ class AddModal extends Component {
       selectPlugin,
     } = this.state;
 
-    type = `${type}`;
+    // type = `${type}`;
     // let { selectorTypeEnums } = platform;
 
-    const { getFieldDecorator } = form;
+    const { getFieldDecorator } = this.props.form;
 
     return (
       <Modal
-        width={
-          pluginHandleList &&
-          pluginHandleList.length > 0 &&
-          pluginHandleList[0].length > 3
-            ? 1300
-            : 1000
-        }
+        width={1300}
         centered
         title={getIntlContent("SHENYU.SERVICE")}
         visible
