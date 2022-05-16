@@ -227,34 +227,36 @@ export default class Plugin extends Component {
       popup: (
         <AddModal
           disabled={false}
-          handleOk={values => {
+          handleOk={serviceConfig => {
             const { dispatch } = this.props;
-            const { name, enabled, role, config, sort } = values;
-            dispatch({
-              type: "plugin/add",
-              payload: {
-                name,
-                config,
-                role,
-                enabled,
-                sort
-              },
-              fetchValue: {
-                name: pluginName,
-                currentPage,
-                pageSize: 12
-              },
-              callback: () => {
-                this.closeModal(true);
-                dispatch({
-                  type: "global/fetchPlugins",
-                  payload: {
-                    callback: () => {}
-                  }
-                });
-                this.fetchPermissions();
-              }
-            });
+            const { serviceName, selectors } = serviceConfig;
+            console.log(serviceConfig)
+            this.closeModal(false);
+            // dispatch({
+            //   type: "plugin/add",
+            //   payload: {
+            //     name,
+            //     config,
+            //     role,
+            //     enabled,
+            {/*    sort*/}
+            //   },
+            //   fetchValue: {
+            //     name: pluginName,
+            //     currentPage,
+            //     pageSize: 12
+            //   },
+            //   callback: () => {
+            //     this.closeModal(true);
+            //     dispatch({
+            //       type: "global/fetchPlugins",
+            //       payload: {
+            //         callback: () => {}
+            //       }
+            //     });
+            //     this.fetchPermissions();
+            //   }
+            // });
           }}
           onCancel={() => {
             this.closeModal();

@@ -36,7 +36,6 @@ import { connect } from "dva";
 import classnames from "classnames";
 import styles from "./Modal.less";
 import { getIntlContent } from "../../../utils/IntlUtils";
-// import SelectorCopy from "./SelectorCopy";
 
 const FormItem = Form.Item;
 const { Option } = Select;
@@ -211,6 +210,7 @@ class AddModal extends Component {
   }
 
   getMultiSelectorHandle = (pluginDetail) => {
+    if (pluginDetail === null || typeof pluginDetail === "undefined") { return null }
     let pluginConfig = pluginDetail.config;
     if (this.judgeObject(pluginConfig) === null) {
       return null;
@@ -233,8 +233,8 @@ class AddModal extends Component {
       if (!err) {
         const mySubmit = selectValue !== "0" && this.checkConditions(selectorConditions);
         if (mySubmit || selectValue === "0") {
-          console.log(this.state.selectedPluginHandleList)
           serviceConfig.serviceName = this.props.form.getFieldValue("serviceName");
+          serviceConfig.selectors = [];
           selectedPluginHandleList.forEach((pluginDetail) => {
             let pluginSelector = {type: "1", pluginId: pluginDetail.pluginId};
             pluginSelector.name = this.props.form.getFieldValue("serviceName");
@@ -244,7 +244,6 @@ class AddModal extends Component {
             pluginSelector.enabled = this.props.form.getFieldValue("enabled");
             pluginSelector.sort = this.props.form.getFieldValue("sort");
             pluginSelector.selectorConditions = selectorConditions;
-            console.log(pluginSelector)
             let handle = [];
             pluginDetail.pluginHandleList.forEach((handleList, index) => {
               handle[index] = {};
@@ -264,22 +263,21 @@ class AddModal extends Component {
                   delete values.divideUpstreams;
                   delete values.gray;
                   delete values.key;
-                } else {
-                  handle[index][item.field] = values[item.field + index];
-                  delete values[item.field + index];
+                }
+                else {
+                  handle[index][item.field] = values[item.field + index + pluginDetail.pluginId];
+                  delete values[item.field + index + pluginDetail.pluginId];
                 }
               });
             });
-            pluginSelector.handle = JSON.stringify(handle);
-            // handleOk({
-            //   ...values,
-            //   handle: multiSelectorHandle
-            //     ? JSON.stringify(handle)
-            //     : JSON.stringify(handle[0]),
-            //   sort: Number(values.sort),
-            //   selectorConditions
-            // });
+            pluginSelector.handle = this.getMultiSelectorHandle(pluginDetail.pluginDetail) === "1"
+              ? JSON.stringify(handle)
+              : JSON.stringify(handle[0]);
+            serviceConfig.selectors.push(pluginSelector);
           })
+          handleOk({
+            serviceConfig,
+          });
         }
       }
     });
@@ -611,7 +609,7 @@ class AddModal extends Component {
             {pluginHandleList.map((handleList, index) => {
               return (
                 <div
-                  key={index}
+                  key={index + pluginId}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -627,7 +625,7 @@ class AddModal extends Component {
                     style={{ width: "100%" }}
                   >
                     {handleList &&
-                    handleList.map(item => {
+                    handleList.map((item) => {
                       let required = item.required === "1";
                       let defaultValue =
                         item.value === 0 || item.value === false
@@ -640,7 +638,7 @@ class AddModal extends Component {
                               : item.defaultValue);
                       let placeholder = item.placeholder || item.label;
                       let checkRule = item.checkRule;
-                      let fieldName = item.field + index;
+                      let fieldName = item.field + index + pluginId;
                       let rules = [];
                       if (required) {
                         rules.push({
@@ -795,12 +793,12 @@ class AddModal extends Component {
   };
 
   onDealChange = (value,item) => {
-    console.log(value, item)
     item.value = value;
   };
 
   onPluginChange = (activePlugin) => {
-    let currentArr = this.state.selectedPluginHandleList || [];
+    let { selectedPluginHandleList } = this.state;
+    let currentArr = selectedPluginHandleList || [];
     let newArr = currentArr.filter((x) => activePlugin.some((item) => x.pluginId === item))
     this.setState({
       selectedPluginHandleList: newArr
@@ -830,8 +828,10 @@ class AddModal extends Component {
   }
 
   setPluginHandleList = (pluginId, pluginName, pluginHandles, pluginDetail) => {
+    let { selectedPluginHandleList } = this.state;
     let currentPlugin = {pluginId, pluginName, pluginHandleList: pluginHandles, pluginDetail}
-    const currentArr = this.state.selectedPluginHandleList || [];
+    const currentArr = selectedPluginHandleList || [];
+    // select plugin update local selectedPluginHandleList
     this.setState({
       selectedPluginHandleList: [...currentArr, currentPlugin]
     })
