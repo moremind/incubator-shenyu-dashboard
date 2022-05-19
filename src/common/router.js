@@ -151,7 +151,7 @@ export const getRouterData = app => {
     },
     "/config/service": {
       // 字典管理
-      component: dynamicWrapper(app, ["shenyuDict"], () =>
+      component: dynamicWrapper(app, ["configService"], () =>
         import("../routes/System/ServiceConfig")
       )
     },

@@ -28,12 +28,13 @@ const { Text } = Typography;
 
 const { Option } = Select;
 
-@connect(({ plugin, loading, global }) => ({
+@connect(({ configService, plugin, loading, global }) => ({
+  configService,
   plugin,
   language: global.language,
   loading: loading.effects["plugin/fetch"]
 }))
-export default class Plugin extends Component {
+export default class ServiceConfig extends Component {
   components = resizableComponents;
 
   constructor(props) {
@@ -227,36 +228,28 @@ export default class Plugin extends Component {
       popup: (
         <AddModal
           disabled={false}
-          handleOk={serviceConfig => {
+          handleOk={serviceConfigs => {
             const { dispatch } = this.props;
-            const { serviceName, selectors } = serviceConfig;
-            console.log(serviceConfig)
-            this.closeModal(false);
-            // dispatch({
-            //   type: "plugin/add",
-            //   payload: {
-            //     name,
-            //     config,
-            //     role,
-            //     enabled,
-            {/*    sort*/}
-            //   },
-            //   fetchValue: {
-            //     name: pluginName,
-            //     currentPage,
-            //     pageSize: 12
-            //   },
-            //   callback: () => {
-            //     this.closeModal(true);
-            //     dispatch({
-            //       type: "global/fetchPlugins",
-            //       payload: {
-            //         callback: () => {}
-            //       }
-            //     });
-            //     this.fetchPermissions();
-            //   }
-            // });
+            dispatch({
+              type: "configService/add",
+              payload: serviceConfigs,
+              fetchValue: {
+                name: "112",
+                currentPage,
+                pageSize: 12
+              },
+              callback: () => {
+                console.log("sss")
+                this.closeModal(true);
+                // dispatch({
+                //   type: "global/fetchPlugins",
+                //   payload: {
+                //     callback: () => {}
+                //   }
+                // });
+                this.fetchPermissions();
+              }
+            })
           }}
           onCancel={() => {
             this.closeModal();

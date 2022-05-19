@@ -227,14 +227,14 @@ class AddModal extends Component {
     const { form, handleOk} = this.props;
     const { selectorConditions, selectValue, selectedPluginHandleList } = this.state;
 
-    let serviceConfig = {};
+    let serviceConfigs = {};
 
     form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const mySubmit = selectValue !== "0" && this.checkConditions(selectorConditions);
         if (mySubmit || selectValue === "0") {
-          serviceConfig.serviceName = this.props.form.getFieldValue("serviceName");
-          serviceConfig.selectors = [];
+          serviceConfigs.serviceName = this.props.form.getFieldValue("serviceName");
+          serviceConfigs.selectors = [];
           selectedPluginHandleList.forEach((pluginDetail) => {
             let pluginSelector = {type: "1", pluginId: pluginDetail.pluginId};
             pluginSelector.name = this.props.form.getFieldValue("serviceName");
@@ -273,11 +273,9 @@ class AddModal extends Component {
             pluginSelector.handle = this.getMultiSelectorHandle(pluginDetail.pluginDetail) === "1"
               ? JSON.stringify(handle)
               : JSON.stringify(handle[0]);
-            serviceConfig.selectors.push(pluginSelector);
+            serviceConfigs.selectors.push(pluginSelector);
           })
-          handleOk({
-            serviceConfig,
-          });
+          handleOk(serviceConfigs);
         }
       }
     });

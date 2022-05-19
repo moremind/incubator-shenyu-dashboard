@@ -750,3 +750,20 @@ export async function deleteDataPermisionRule(params) {
     }
   });
 }
+
+/* add service config */
+export async function addServiceConfig(params) {
+  return request(`${baseUrl}/service/config/insert`, {
+    method: `POST`,
+    body: {
+      ...params
+    }
+  })
+}
+
+/* fetch all service config */
+export async function getAllServiceConfig(params) {
+  return request(`${baseUrl}/service/config?${stringify(params)}`, {
+    method: `GET`
+  });
+}
